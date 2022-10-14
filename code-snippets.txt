@@ -1,0 +1,75 @@
+// Snippet 1
+mounted() {
+	if (this.$refs.labelAdditional.offsetParent !== null) {
+		this.triggerAdvice('categories')
+		this.triggerAdvice('languages')
+	}
+// trying to retrieve the categories from store.....
+	this.getCategories().then(() => {
+		let primaryCategories = this.buildOptionsForCategory
+		this.primaryCategories.options = primaryCategories.options
+		let primaryParent = primaryCategories.parent.map(a => ({ ...a }))
+		primaryParent.unshift({ 'value': null, 'text': this.$t('create_task.categories.placeholder') })
+		this.primaryCategories.parent = primaryParent
+
+		let additionalCategories = this.buildOptionsForCategory
+		this.additionalCategories.options = additionalCategories.options
+		let additionalParent = primaryCategories.parent.map(a => ({ ...a }))
+		additionalParent.unshift({ 'value': null, 'text': this.$t('create_task.categories.additional_label') })
+		this.additionalCategories.parent = additionalParent
+
+		this.setSelectDefaultMessage()
+		if (this.taskCategory.length) {
+			this.selectedCategories = []
+			this.taskCategory.forEach((item, i) => {
+				if (i === 0) {
+					this.setParentData(item)
+				} else {
+					this.selectedCategories.push(item)
+				}
+			})
+			this.categoryPrimaryIndex(true)
+		}
+	})
+// trying to retrieve the categories from store.....
+	this.getLanguages().then(() => {
+		this.selectionLanguages.options = this.buildOptionsForLanguages
+	})
+
+	if (this.taskLanguages.length) {
+		this.selectedLanguages = this.taskLanguages
+	}
+}
+
+// Snippet 2
+// Compare existing categories if not contains, add it to the array
+addCategory() {
+	this.errors = []
+
+	if (this.primaryCategories.selected === null) {
+		this.setError(this.$t('create_task.categories.errors.primary_not_set'))
+		return
+	}
+
+	if (this.additionalCategories.selected === null) {
+		return
+	}
+
+	if (this.selectedCategories.length < 2) {
+		if (this.additionalCategories.selected !== this.primaryCategories.selected) {
+			let category = this.getCategoryHashes(this.additionalCategories.selected, this.additionalCategories.selectedParentIndex)
+			if (category === undefined) {
+				this.setError(this.$t('create_task.categories.errors.invalid'))
+				return
+			}
+
+			this.selectedCategories.push(category)
+			this.selectedCategories = [...new Set(this.selectedCategories)]
+		} else {
+			this.setError(this.$t('create_task.categories.errors.primary_already_set'))
+		}
+	} else {
+		this.setError(this.$t('create_task.categories.errors.max'))
+	}
+	this.additionalCategories.selected = null
+}
